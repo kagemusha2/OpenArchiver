@@ -1,4 +1,4 @@
-import { IStorageProvider, StorageConfig } from '@open-archiver/types';
+import { IStorageProvider, StorageConfig, StorageObject } from '@open-archiver/types';
 import { LocalFileSystemProvider } from './storage/LocalFileSystemProvider';
 import { S3StorageProvider } from './storage/S3StorageProvider';
 import { config } from '../config/index';
@@ -160,5 +160,31 @@ export class StorageService implements IStorageProvider {
 
 	exists(path: string): Promise<boolean> {
 		return this.provider.exists(path);
+	}
+
+	/**
+	 * Lists all files under a given prefix.
+	 * @param prefix - The prefix to filter files by.
+	 * @param suffix - Optional suffix to filter files by (e.g., '.mbox').
+	 * @returns A promise that resolves with an array of storage objects.
+	 */
+	async list(prefix: string, suffix?: string): Promise<StorageObject[]> {
+		if (this.provider.list) {
+			return this.provider.list(prefix, suffix);
+		}
+		throw new Error('List operation not supported by this storage provider');
+	}
+
+	/**
+	 * Copies a file from one path to another.
+	 * @param sourcePath - The source path of the file.
+	 * @param destinationPath - The destination path for the file.
+	 * @returns A promise that resolves when the file is copied.
+	 */
+	async copy(sourcePath: string, destinationPath: string): Promise<void> {
+		if (this.provider.copy) {
+			return this.provider.copy(sourcePath, destinationPath);
+		}
+		throw new Error('Copy operation not supported by this storage provider');
 	}
 }

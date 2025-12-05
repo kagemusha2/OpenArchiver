@@ -1,4 +1,4 @@
-import { IStorageProvider, LocalStorageConfig } from '@open-archiver/types';
+import { IStorageProvider, LocalStorageConfig, StorageObject } from '@open-archiver/types';
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import { createReadStream, createWriteStream } from 'fs';
@@ -54,5 +54,55 @@ export class LocalFileSystemProvider implements IStorageProvider {
 		} catch {
 			return false;
 		}
+	}
+
+	async list(prefix: string, suffix?: string): Promise<StorageObject[]> {
+		const fullPath = path.join(this.rootPath, prefix);
+		const objects: StorageObject[] = [];
+
+		try {
+			await fs.access(fullPath);
+		} catch {
+			// Directory doesn't exist
+			return objects;
+		}
+
+		const walkDirectory = async (dir: string): Promise<void> => {
+			const entries = await fs.readdir(dir, { withFileTypes: true });
+
+			for (const entry of entries) {
+				const entryPath = path.join(dir, entry.name);
+				const relativePath = path.relative(this.rootPath, entryPath);
+
+				if (entry.isDirectory()) {
+					await walkDirectory(entryPath);
+				} else if (entry.isFile()) {
+					// Filter by suffix if provided
+					if (suffix && !entry.name.toLowerCase().endsWith(suffix.toLowerCase())) {
+						continue;
+					}
+					const stat = await fs.stat(entryPath);
+					objects.push({
+						key: relativePath,
+						size: stat.size,
+						lastModified: stat.mtime,
+					});
+				}
+			}
+		};
+
+		await walkDirectory(fullPath);
+		return objects;
+	}
+
+	async copy(sourcePath: string, destinationPath: string): Promise<void> {
+		const fullSourcePath = path.join(this.rootPath, sourcePath);
+		const fullDestPath = path.join(this.rootPath, destinationPath);
+
+		// Ensure destination directory exists
+		const destDir = path.dirname(fullDestPath);
+		await fs.mkdir(destDir, { recursive: true });
+
+		await fs.copyFile(fullSourcePath, fullDestPath);
 	}
 }
