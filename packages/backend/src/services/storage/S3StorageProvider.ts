@@ -1,4 +1,4 @@
-import { IStorageProvider, S3StorageConfig } from '@open-archiver/types';
+import { IStorageProvider, S3StorageConfig, StorageObject } from '@open-archiver/types';
 import {
 	S3Client,
 	GetObjectCommand,
@@ -7,6 +7,7 @@ import {
 	NotFound,
 	ListObjectsV2Command,
 	DeleteObjectsCommand,
+	CopyObjectCommand,
 } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
 import { Readable } from 'stream';
@@ -101,5 +102,50 @@ export class S3StorageProvider implements IStorageProvider {
 			}
 			throw error;
 		}
+	}
+
+	async list(prefix: string, suffix?: string): Promise<StorageObject[]> {
+		const objects: StorageObject[] = [];
+		let continuationToken: string | undefined;
+
+		do {
+			const command = new ListObjectsV2Command({
+				Bucket: this.bucket,
+				Prefix: prefix,
+				ContinuationToken: continuationToken,
+			});
+
+			const response = await this.client.send(command);
+
+			if (response.Contents) {
+				for (const item of response.Contents) {
+					if (item.Key) {
+						// Filter by suffix if provided
+						if (suffix && !item.Key.toLowerCase().endsWith(suffix.toLowerCase())) {
+							continue;
+						}
+						objects.push({
+							key: item.Key,
+							size: item.Size,
+							lastModified: item.LastModified,
+						});
+					}
+				}
+			}
+
+			continuationToken = response.IsTruncated ? response.NextContinuationToken : undefined;
+		} while (continuationToken);
+
+		return objects;
+	}
+
+	async copy(sourcePath: string, destinationPath: string): Promise<void> {
+		const command = new CopyObjectCommand({
+			Bucket: this.bucket,
+			CopySource: `${this.bucket}/${sourcePath}`,
+			Key: destinationPath,
+		});
+
+		await this.client.send(command);
 	}
 }

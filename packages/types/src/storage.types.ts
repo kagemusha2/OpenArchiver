@@ -1,6 +1,15 @@
 // packages/types/src/storage.types.ts
 
 /**
+ * Represents a file object returned by the list operation.
+ */
+export interface StorageObject {
+	key: string;
+	size?: number;
+	lastModified?: Date;
+}
+
+/**
  * Defines the contract that all storage providers must implement.
  * It uses streams to efficiently handle potentially large files without
  * loading them entirely into memory.
@@ -35,6 +44,22 @@ export interface IStorageProvider {
 	 * @returns A promise that resolves with true if the file exists, false otherwise.
 	 */
 	exists(path: string): Promise<boolean>;
+
+	/**
+	 * Lists all files under a given prefix (optional).
+	 * @param prefix - The prefix to filter files by.
+	 * @param suffix - Optional suffix to filter files by (e.g., '.mbox').
+	 * @returns A promise that resolves with an array of storage objects.
+	 */
+	list?(prefix: string, suffix?: string): Promise<StorageObject[]>;
+
+	/**
+	 * Copies a file from one path to another (optional).
+	 * @param sourcePath - The source path of the file.
+	 * @param destinationPath - The destination path for the file.
+	 * @returns A promise that resolves when the file is copied.
+	 */
+	copy?(sourcePath: string, destinationPath: string): Promise<void>;
 }
 
 /**
