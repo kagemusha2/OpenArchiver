@@ -370,9 +370,9 @@ export class MboxImportService {
 			const emailPath = `${config.storage.openArchiverFolderName}/${source.name.replaceAll(' ', '-')}-${source.id}/emails/${sanitizedPath}${email.id}.eml`;
 			await this.storage.put(emailPath, emlBuffer);
 
-			// Construct the userEmail from the filename
+			// Construct the userEmail from the filename using configurable domain
 			const displayName = path.basename(source.name);
-			const userEmail = `${displayName.replace(/ /g, '.').toLowerCase()}@mbox.local`;
+			const userEmail = `${displayName.replace(/ /g, '.').toLowerCase()}@${config.mboxImport.emailDomain}`;
 
 			const [archivedEmail] = await db
 				.insert(archivedEmails)

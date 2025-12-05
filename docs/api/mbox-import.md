@@ -14,6 +14,7 @@ The following environment variables control the MBOX auto-import behavior:
 |----------|---------|-------------|
 | `S3_UPLOADS_PREFIX` | `Uploads/` | The folder prefix where MBOX files should be placed for import |
 | `S3_MBOX_POST_PROCESS_ACTION` | `move` | Action after processing: `move` (to processed folder), `delete`, or `keep` |
+| `MBOX_IMPORT_EMAIL_DOMAIN` | `mbox.local` | Email domain used for generated email addresses during import |
 
 ## Endpoints
 

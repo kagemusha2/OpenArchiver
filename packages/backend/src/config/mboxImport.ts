@@ -19,4 +19,9 @@ export const mboxImportConfig = {
 	 * The prefix for processed files when using 'move' action.
 	 */
 	processedPrefix: 'Uploads/processed/',
+	/**
+	 * The email domain used for generated email addresses when importing MBOX files.
+	 * Default: 'mbox.local'
+	 */
+	emailDomain: process.env.MBOX_IMPORT_EMAIL_DOMAIN || 'mbox.local',
 };
